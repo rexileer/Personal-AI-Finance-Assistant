@@ -1,0 +1,21 @@
+[project]
+name = "personal-ai-finance-assistant"
+version = "0.1.0"
+description = "Self-hosted Telegram bot for debt and payment tracking with Django admin panel."
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = ["*/migrations/*"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["B904"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.local"
+pythonpath = ["personal_ai_finance_assistant"]
+python_files = ["tests.py", "test_*.py", "*_tests.py"]
+asyncio_default_fixture_loop_scope = "function"

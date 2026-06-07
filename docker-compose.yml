@@ -1,0 +1,48 @@
+services:
+  web:
+    build: .
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py init_dev &&
+             python manage.py runserver 0.0.0.0:8000"
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+
+  bot:
+    build: .
+    command: python manage.py runbot
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - .:/app
+    depends_on:
+      - web
+      - redis
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: finance_assistant
+      POSTGRES_USER: finance_assistant
+      POSTGRES_PASSWORD: finance_assistant
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_data:
