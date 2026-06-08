@@ -2,129 +2,432 @@
 
 {% block content %}
 <style>
-  .metric-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-    gap: 16px;
-    margin-bottom: 24px;
+  .finance-dashboard {
+    --finance-bg: #f8fafc;
+    --finance-panel: #ffffff;
+    --finance-panel-subtle: #f1f5f9;
+    --finance-border: #e2e8f0;
+    --finance-text: #0f172a;
+    --finance-muted: #64748b;
+    --finance-accent: #0f766e;
+    --finance-accent-soft: #ccfbf1;
+    --finance-danger: #b91c1c;
+    --finance-danger-soft: #fee2e2;
+    --finance-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 12px 28px rgba(15, 23, 42, 0.06);
+
+    color: var(--finance-text);
+    margin: -12px -8px 0;
   }
-  .metric-card, .analytics-panel {
-    border: 1px solid var(--border-color, #e5e7eb);
+
+  html.dark .finance-dashboard,
+  [data-theme="dark"] .finance-dashboard,
+  .dark .finance-dashboard {
+    --finance-bg: #0f172a;
+    --finance-panel: #111827;
+    --finance-panel-subtle: #1f2937;
+    --finance-border: #334155;
+    --finance-text: #e5e7eb;
+    --finance-muted: #94a3b8;
+    --finance-accent: #5eead4;
+    --finance-accent-soft: rgba(20, 184, 166, 0.16);
+    --finance-danger: #fca5a5;
+    --finance-danger-soft: rgba(239, 68, 68, 0.14);
+    --finance-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 16px 32px rgba(0, 0, 0, 0.24);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .finance-dashboard {
+      --finance-bg: #0f172a;
+      --finance-panel: #111827;
+      --finance-panel-subtle: #1f2937;
+      --finance-border: #334155;
+      --finance-text: #e5e7eb;
+      --finance-muted: #94a3b8;
+      --finance-accent: #5eead4;
+      --finance-accent-soft: rgba(20, 184, 166, 0.16);
+      --finance-danger: #fca5a5;
+      --finance-danger-soft: rgba(239, 68, 68, 0.14);
+      --finance-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 16px 32px rgba(0, 0, 0, 0.24);
+    }
+  }
+
+  .finance-dashboard__header {
+    background: var(--finance-bg);
+    border: 1px solid var(--finance-border);
     border-radius: 8px;
-    padding: 16px;
-    background: var(--body-bg, #fff);
+    display: flex;
+    gap: 18px;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    padding: 20px;
   }
-  .metric-label {
-    color: var(--body-quiet-color, #6b7280);
-    font-size: 12px;
-    text-transform: uppercase;
-  }
-  .metric-value {
+
+  .finance-dashboard__title {
     font-size: 24px;
     font-weight: 700;
-    margin-top: 6px;
+    line-height: 1.2;
+    margin: 0 0 6px;
   }
+
+  .finance-dashboard__subtitle {
+    color: var(--finance-muted);
+    font-size: 14px;
+    margin: 0;
+  }
+
+  .finance-dashboard__badge {
+    align-self: flex-start;
+    background: var(--finance-accent-soft);
+    border: 1px solid color-mix(in srgb, var(--finance-accent), transparent 55%);
+    border-radius: 999px;
+    color: var(--finance-accent);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0;
+    padding: 7px 11px;
+    white-space: nowrap;
+  }
+
+  .metric-grid {
+    display: grid;
+    gap: 14px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-bottom: 18px;
+  }
+
+  .metric-card,
+  .analytics-panel {
+    background: var(--finance-panel);
+    border: 1px solid var(--finance-border);
+    border-radius: 8px;
+    box-shadow: var(--finance-shadow);
+  }
+
+  .metric-card {
+    min-height: 112px;
+    padding: 16px;
+  }
+
+  .metric-card--debt {
+    border-left: 4px solid var(--finance-danger);
+  }
+
+  .metric-card--cash {
+    border-left: 4px solid var(--finance-accent);
+  }
+
+  .metric-label {
+    color: var(--finance-muted);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+  }
+
+  .metric-value {
+    color: var(--finance-text);
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+  }
+
   .analytics-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 18px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .analytics-panel {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .analytics-panel--wide {
+    grid-column: 1 / -1;
+  }
+
+  .analytics-panel__header {
+    align-items: center;
+    background: var(--finance-panel-subtle);
+    border-bottom: 1px solid var(--finance-border);
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+  }
+
+  .analytics-panel__title {
+    color: var(--finance-text);
+    font-size: 15px;
+    font-weight: 800;
+    line-height: 1.25;
+    margin: 0;
+  }
+
+  .analytics-panel__meta {
+    color: var(--finance-muted);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .analytics-table-wrap {
+    overflow-x: auto;
+  }
+
   .analytics-table {
-    width: 100%;
     border-collapse: collapse;
+    color: var(--finance-text);
+    min-width: 520px;
+    width: 100%;
   }
-  .analytics-table th, .analytics-table td {
-    padding: 8px 6px;
-    border-bottom: 1px solid var(--border-color, #e5e7eb);
+
+  .analytics-table th,
+  .analytics-table td {
+    border-bottom: 1px solid var(--finance-border);
+    padding: 11px 16px;
     text-align: left;
+    vertical-align: top;
+  }
+
+  .analytics-table th {
+    color: var(--finance-muted);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0;
+    text-transform: uppercase;
+  }
+
+  .analytics-table tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .analytics-table__amount {
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .analytics-empty {
+    color: var(--finance-muted);
+    padding: 18px 16px;
+  }
+
+  @media (max-width: 900px) {
+    .metric-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .analytics-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .finance-dashboard {
+      margin: 0;
+    }
+
+    .finance-dashboard__header {
+      flex-direction: column;
+      padding: 16px;
+    }
+
+    .finance-dashboard__title {
+      font-size: 21px;
+    }
+
+    .metric-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .metric-value {
+      font-size: 21px;
+    }
+
+    .analytics-panel__header {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 4px;
+      padding: 12px 14px;
+    }
+
+    .analytics-panel__meta {
+      white-space: normal;
+    }
+
+    .analytics-table {
+      min-width: 0;
+      table-layout: fixed;
+    }
+
+    .analytics-table th,
+    .analytics-table td {
+      font-size: 12px;
+      padding: 10px 8px;
+      overflow-wrap: anywhere;
+    }
+
+    .analytics-table__amount {
+      white-space: normal;
+    }
   }
 </style>
 
-<h1>Finance analytics</h1>
+<div class="finance-dashboard">
+  <header class="finance-dashboard__header">
+    <div>
+      <h1 class="finance-dashboard__title">Finance analytics</h1>
+      <p class="finance-dashboard__subtitle">
+        Debt pressure, monthly cashflow and upcoming payments in one admin view.
+      </p>
+    </div>
+    <div class="finance-dashboard__badge">Admin dashboard</div>
+  </header>
 
-<div class="metric-grid">
-  <div class="metric-card"><div class="metric-label">Active debt balance</div><div class="metric-value">{{ total_active_debt }} RUB</div></div>
-  <div class="metric-card"><div class="metric-label">Active debts</div><div class="metric-value">{{ active_debt_count }}</div></div>
-  <div class="metric-card"><div class="metric-label">Paid this month</div><div class="metric-value">{{ total_paid_month }} RUB</div></div>
-  <div class="metric-card"><div class="metric-label">Income this month</div><div class="metric-value">{{ total_income_month }} RUB</div></div>
-  <div class="metric-card"><div class="metric-label">Expenses this month</div><div class="metric-value">{{ total_expenses_month }} RUB</div></div>
-  <div class="metric-card"><div class="metric-label">Net cashflow</div><div class="metric-value">{{ net_cashflow_month }} RUB</div></div>
+  <div class="metric-grid">
+    <div class="metric-card metric-card--debt">
+      <div class="metric-label">Active debt balance</div>
+      <div class="metric-value">{{ total_active_debt }} RUB</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Active debts</div>
+      <div class="metric-value">{{ active_debt_count }}</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Paid this month</div>
+      <div class="metric-value">{{ total_paid_month }} RUB</div>
+    </div>
+    <div class="metric-card metric-card--cash">
+      <div class="metric-label">Income this month</div>
+      <div class="metric-value">{{ total_income_month }} RUB</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Expenses this month</div>
+      <div class="metric-value">{{ total_expenses_month }} RUB</div>
+    </div>
+    <div class="metric-card metric-card--cash">
+      <div class="metric-label">Net cashflow</div>
+      <div class="metric-value">{{ net_cashflow_month }} RUB</div>
+    </div>
+  </div>
+
+  <div class="analytics-grid">
+    <section class="analytics-panel">
+      <div class="analytics-panel__header">
+        <h2 class="analytics-panel__title">Upcoming payments</h2>
+        <span class="analytics-panel__meta">Next 7 days</span>
+      </div>
+      <div class="analytics-table-wrap">
+        <table class="analytics-table">
+          <thead><tr><th>Date</th><th>Debt</th><th>Amount</th></tr></thead>
+          <tbody>
+            {% for debt in upcoming_7 %}
+              <tr>
+                <td>{{ debt.next_payment_date }}</td>
+                <td>{{ debt.name }}</td>
+                <td class="analytics-table__amount">{{ debt.next_payment_amount }} {{ debt.currency }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="3" class="analytics-empty">No upcoming payments.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="analytics-panel">
+      <div class="analytics-panel__header">
+        <h2 class="analytics-panel__title">Upcoming payments</h2>
+        <span class="analytics-panel__meta">Next 30 days</span>
+      </div>
+      <div class="analytics-table-wrap">
+        <table class="analytics-table">
+          <thead><tr><th>Date</th><th>Debt</th><th>Amount</th></tr></thead>
+          <tbody>
+            {% for debt in upcoming_30 %}
+              <tr>
+                <td>{{ debt.next_payment_date }}</td>
+                <td>{{ debt.name }}</td>
+                <td class="analytics-table__amount">{{ debt.next_payment_amount }} {{ debt.currency }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="3" class="analytics-empty">No upcoming payments.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="analytics-panel">
+      <div class="analytics-panel__header">
+        <h2 class="analytics-panel__title">Overdue payments</h2>
+        <span class="analytics-panel__meta">Needs attention</span>
+      </div>
+      <div class="analytics-table-wrap">
+        <table class="analytics-table">
+          <thead><tr><th>Date</th><th>Debt</th><th>Amount</th></tr></thead>
+          <tbody>
+            {% for debt in overdue %}
+              <tr>
+                <td>{{ debt.next_payment_date }}</td>
+                <td>{{ debt.name }}</td>
+                <td class="analytics-table__amount">{{ debt.next_payment_amount }} {{ debt.currency }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="3" class="analytics-empty">No overdue payments.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="analytics-panel">
+      <div class="analytics-panel__header">
+        <h2 class="analytics-panel__title">Debt distribution</h2>
+        <span class="analytics-panel__meta">By type</span>
+      </div>
+      <div class="analytics-table-wrap">
+        <table class="analytics-table">
+          <thead><tr><th>Type</th><th>Total</th></tr></thead>
+          <tbody>
+            {% for row in debt_distribution %}
+              <tr>
+                <td>{{ row.debt_type }}</td>
+                <td class="analytics-table__amount">{{ row.total }} RUB</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="2" class="analytics-empty">No active debts.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="analytics-panel analytics-panel--wide">
+      <div class="analytics-panel__header">
+        <h2 class="analytics-panel__title">Monthly payments</h2>
+        <span class="analytics-panel__meta">Current month</span>
+      </div>
+      <div class="analytics-table-wrap">
+        <table class="analytics-table">
+          <thead><tr><th>Date</th><th>Debt</th><th>Amount</th><th>Type</th></tr></thead>
+          <tbody>
+            {% for payment in monthly_payments %}
+              <tr>
+                <td>{{ payment.paid_at }}</td>
+                <td>{{ payment.debt.name|default:"-" }}</td>
+                <td class="analytics-table__amount">{{ payment.amount }} {{ payment.currency }}</td>
+                <td>{{ payment.get_payment_type_display }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="4" class="analytics-empty">No payments this month.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
 </div>
-
-<div class="analytics-grid">
-  <section class="analytics-panel">
-    <h2>Upcoming payments: 7 days</h2>
-    <table class="analytics-table">
-      <thead><tr><th>Date</th><th>Debt</th><th>Amount</th></tr></thead>
-      <tbody>
-        {% for debt in upcoming_7 %}
-          <tr><td>{{ debt.next_payment_date }}</td><td>{{ debt.name }}</td><td>{{ debt.next_payment_amount }} {{ debt.currency }}</td></tr>
-        {% empty %}
-          <tr><td colspan="3">No upcoming payments.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </section>
-
-  <section class="analytics-panel">
-    <h2>Upcoming payments: 30 days</h2>
-    <table class="analytics-table">
-      <thead><tr><th>Date</th><th>Debt</th><th>Amount</th></tr></thead>
-      <tbody>
-        {% for debt in upcoming_30 %}
-          <tr><td>{{ debt.next_payment_date }}</td><td>{{ debt.name }}</td><td>{{ debt.next_payment_amount }} {{ debt.currency }}</td></tr>
-        {% empty %}
-          <tr><td colspan="3">No upcoming payments.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </section>
-
-  <section class="analytics-panel">
-    <h2>Overdue payments</h2>
-    <table class="analytics-table">
-      <thead><tr><th>Date</th><th>Debt</th><th>Amount</th></tr></thead>
-      <tbody>
-        {% for debt in overdue %}
-          <tr><td>{{ debt.next_payment_date }}</td><td>{{ debt.name }}</td><td>{{ debt.next_payment_amount }} {{ debt.currency }}</td></tr>
-        {% empty %}
-          <tr><td colspan="3">No overdue payments.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </section>
-
-  <section class="analytics-panel">
-    <h2>Debt distribution</h2>
-    <table class="analytics-table">
-      <thead><tr><th>Type</th><th>Total</th></tr></thead>
-      <tbody>
-        {% for row in debt_distribution %}
-          <tr><td>{{ row.debt_type }}</td><td>{{ row.total }} RUB</td></tr>
-        {% empty %}
-          <tr><td colspan="2">No active debts.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </section>
-</div>
-
-<section class="analytics-panel" style="margin-top: 18px;">
-  <h2>Monthly payments</h2>
-  <table class="analytics-table">
-    <thead><tr><th>Date</th><th>Debt</th><th>Amount</th><th>Type</th></tr></thead>
-    <tbody>
-      {% for payment in monthly_payments %}
-        <tr>
-          <td>{{ payment.paid_at }}</td>
-          <td>{{ payment.debt.name|default:"-" }}</td>
-          <td>{{ payment.amount }} {{ payment.currency }}</td>
-          <td>{{ payment.get_payment_type_display }}</td>
-        </tr>
-      {% empty %}
-        <tr><td colspan="4">No payments this month.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</section>
 {% endblock %}

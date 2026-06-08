@@ -148,7 +148,82 @@ UNFOLD = {
                         "link": "/admin/analytics/dashboard/",
                     }
                 ],
-            }
+            },
+            {
+                "title": "Finance",
+                "items": [
+                    {
+                        "title": "Debts",
+                        "icon": "account_balance_wallet",
+                        "link": "/admin/finance/debt/",
+                    },
+                    {
+                        "title": "Payments",
+                        "icon": "payments",
+                        "link": "/admin/finance/payment/",
+                    },
+                    {
+                        "title": "Income",
+                        "icon": "trending_up",
+                        "link": "/admin/finance/income/",
+                    },
+                    {
+                        "title": "Expenses",
+                        "icon": "shopping_cart",
+                        "link": "/admin/finance/expense/",
+                    },
+                ],
+            },
+            {
+                "title": "Telegram Bot",
+                "items": [
+                    {
+                        "title": "Pending actions",
+                        "icon": "rule",
+                        "link": "/admin/bot/botaction/",
+                    },
+                    {
+                        "title": "Messages",
+                        "icon": "forum",
+                        "link": "/admin/bot/botmessage/",
+                    },
+                ],
+            },
+            {
+                "title": "LLM",
+                "items": [
+                    {
+                        "title": "Providers",
+                        "icon": "hub",
+                        "link": "/admin/llm/llmproviderconfig/",
+                    },
+                    {
+                        "title": "Model presets",
+                        "icon": "model_training",
+                        "link": "/admin/llm/llmmodelpreset/",
+                    },
+                    {
+                        "title": "Settings",
+                        "icon": "tune",
+                        "link": "/admin/llm/llmsettings/",
+                    },
+                ],
+            },
+            {
+                "title": "Access",
+                "items": [
+                    {
+                        "title": "Users",
+                        "icon": "person",
+                        "link": "/admin/auth/user/",
+                    },
+                    {
+                        "title": "Groups",
+                        "icon": "group",
+                        "link": "/admin/auth/group/",
+                    },
+                ],
+            },
         ],
     },
 }

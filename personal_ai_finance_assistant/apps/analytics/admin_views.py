@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import timedelta
 from decimal import Decimal
 
+from django.contrib import admin
 from django.db.models import Sum
 from django.shortcuts import render
 from django.utils import timezone
@@ -23,7 +24,7 @@ def analytics_dashboard(request):
     payments_month = Payment.objects.filter(paid_at__gte=month_start, paid_at__lte=today)
     income_month = Income.objects.filter(received_at__gte=month_start, received_at__lte=today)
     expenses_month = Expense.objects.filter(spent_at__gte=month_start, spent_at__lte=today)
-    context = {
+    context = admin.site.each_context(request) | {
         "title": "Finance analytics",
         "total_active_debt": _sum(active_debts, "current_balance"),
         "active_debt_count": active_debts.count(),

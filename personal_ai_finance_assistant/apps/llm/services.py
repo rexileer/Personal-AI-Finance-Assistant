@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass
 from datetime import date
 
+from asgiref.sync import sync_to_async
 from pydantic import ValidationError
 
 from apps.llm.models import LLMModelPreset, LLMProviderConfig, LLMSettings
@@ -11,6 +13,13 @@ from apps.llm.providers import BaseLLMClient, LLMProviderError, OpenAIProvider, 
 from apps.llm.schemas import FinanceAssistantAction
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class LLMRuntimeConfig:
+    settings: LLMSettings
+    provider: LLMProviderConfig | None
+    presets: list[LLMModelPreset]
 
 
 def get_client(provider: LLMProviderConfig, temperature: float = 0) -> BaseLLMClient:
@@ -38,9 +47,18 @@ def get_active_model_presets(settings: LLMSettings) -> list[LLMModelPreset]:
     return list(qs.filter(tier=settings.active_tier).order_by("priority", "label"))
 
 
+def load_runtime_config() -> LLMRuntimeConfig:
+    settings, _ = LLMSettings.objects.select_related("active_provider").get_or_create(pk=1)
+    provider = settings.active_provider
+    presets = get_active_model_presets(settings)
+    return LLMRuntimeConfig(settings=settings, provider=provider, presets=presets)
+
+
 async def parse_finance_message(user_text: str, current_date: date) -> FinanceAssistantAction:
-    settings = LLMSettings.get_solo()
-    if not settings.active_provider or not settings.active_provider.api_key:
+    runtime = await sync_to_async(load_runtime_config, thread_sensitive=True)()
+    settings = runtime.settings
+    provider = runtime.provider
+    if not provider or not provider.api_key:
         return FinanceAssistantAction(
             action_type="ask_clarification",
             confidence=0,
@@ -54,7 +72,7 @@ async def parse_finance_message(user_text: str, current_date: date) -> FinanceAs
         {"role": "system", "content": build_finance_system_prompt(current_date)},
         {"role": "user", "content": user_text},
     ]
-    presets = get_active_model_presets(settings)
+    presets = runtime.presets
     if not presets:
         return FinanceAssistantAction(
             action_type="ask_clarification",
@@ -68,7 +86,7 @@ async def parse_finance_message(user_text: str, current_date: date) -> FinanceAs
     max_attempts = max(1, settings.max_retries + 1)
     for preset in presets[:max_attempts]:
         logger.info("Trying LLM model preset '%s' (%s)", preset.label, preset.model_id)
-        client = get_client(settings.active_provider, settings.temperature)
+        client = get_client(provider, settings.temperature)
         try:
             return await client.complete_structured(messages, preset.model_id, FinanceAssistantAction)
         except (LLMProviderError, ValidationError, ValueError) as exc:

@@ -5,6 +5,7 @@ import logging
 from aiogram import Bot, Dispatcher, F, Router
 from aiogram.filters import Command
 from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
+from asgiref.sync import sync_to_async
 from django.conf import settings
 from django.utils import timezone
 
@@ -46,7 +47,11 @@ def _allowed(message: Message) -> bool:
 
 async def _reply(message: Message, text: str, **kwargs) -> None:
     user_id = message.from_user.id if message.from_user else 0
-    BotMessage.objects.create(telegram_user_id=user_id, direction=BotMessage.Direction.OUTGOING, text=text)
+    await sync_to_async(BotMessage.objects.create, thread_sensitive=True)(
+        telegram_user_id=user_id,
+        direction=BotMessage.Direction.OUTGOING,
+        text=text,
+    )
     await message.answer(text, **kwargs)
 
 
@@ -71,7 +76,7 @@ async def summary(message: Message) -> None:
     if not _allowed(message):
         await message.answer(DENIED_MESSAGE_RU)
         return
-    await _reply(message, summary_text())
+    await _reply(message, await sync_to_async(summary_text, thread_sensitive=True)())
 
 
 @router.message(Command("debts"))
@@ -79,7 +84,7 @@ async def debts(message: Message) -> None:
     if not _allowed(message):
         await message.answer(DENIED_MESSAGE_RU)
         return
-    await _reply(message, debts_text())
+    await _reply(message, await sync_to_async(debts_text, thread_sensitive=True)())
 
 
 @router.message(Command("payments"))
@@ -87,7 +92,7 @@ async def payments(message: Message) -> None:
     if not _allowed(message):
         await message.answer(DENIED_MESSAGE_RU)
         return
-    await _reply(message, payments_text())
+    await _reply(message, await sync_to_async(payments_text, thread_sensitive=True)())
 
 
 @router.message(Command("upcoming"))
@@ -95,7 +100,7 @@ async def upcoming(message: Message) -> None:
     if not _allowed(message):
         await message.answer(DENIED_MESSAGE_RU)
         return
-    await _reply(message, upcoming_text())
+    await _reply(message, await sync_to_async(upcoming_text, thread_sensitive=True)())
 
 
 @router.message(Command("income"))
@@ -103,7 +108,7 @@ async def income(message: Message) -> None:
     if not _allowed(message):
         await message.answer(DENIED_MESSAGE_RU)
         return
-    await _reply(message, income_text())
+    await _reply(message, await sync_to_async(income_text, thread_sensitive=True)())
 
 
 @router.message(Command("expenses"))
@@ -111,7 +116,7 @@ async def expenses(message: Message) -> None:
     if not _allowed(message):
         await message.answer(DENIED_MESSAGE_RU)
         return
-    await _reply(message, expenses_text())
+    await _reply(message, await sync_to_async(expenses_text, thread_sensitive=True)())
 
 
 @router.message(Command("cancel"))
@@ -120,9 +125,12 @@ async def cancel(message: Message) -> None:
         await message.answer(DENIED_MESSAGE_RU)
         return
     user_id = message.from_user.id if message.from_user else 0
-    action = BotAction.objects.filter(telegram_user_id=user_id, status=BotAction.Status.PENDING).first()
+    action = await sync_to_async(
+        lambda: BotAction.objects.filter(telegram_user_id=user_id, status=BotAction.Status.PENDING).first(),
+        thread_sensitive=True,
+    )()
     if action:
-        reject_bot_action(action)
+        await sync_to_async(reject_bot_action, thread_sensitive=True)(action)
         await _reply(message, "Окей, действие отменено.")
     else:
         await _reply(message, "Нет ожидающих действий.")
@@ -135,7 +143,11 @@ async def natural_language_message(message: Message) -> None:
         return
     user_id = message.from_user.id if message.from_user else 0
     text = message.text or ""
-    BotMessage.objects.create(telegram_user_id=user_id, direction=BotMessage.Direction.INCOMING, text=text)
+    await sync_to_async(BotMessage.objects.create, thread_sensitive=True)(
+        telegram_user_id=user_id,
+        direction=BotMessage.Direction.INCOMING,
+        text=text,
+    )
     try:
         parsed = await parse_finance_message(text, timezone.localdate())
     except Exception as exc:  # noqa: BLE001
@@ -149,10 +161,11 @@ async def natural_language_message(message: Message) -> None:
         return
 
     if parsed.action_type.startswith("show_"):
-        await _reply(message, _report_for_action(parsed.action_type))
+        report = await sync_to_async(_report_for_action, thread_sensitive=True)(parsed.action_type)
+        await _reply(message, report)
         return
 
-    action = BotAction.objects.create(
+    action = await sync_to_async(BotAction.objects.create, thread_sensitive=True)(
         telegram_user_id=user_id,
         action_type=parsed.action_type,
         payload=parsed.data,
@@ -178,11 +191,14 @@ async def confirm_action(callback: CallbackQuery) -> None:
         await callback.answer(DENIED_MESSAGE_RU, show_alert=True)
         return
     action_id = int((callback.data or "").split(":", 1)[1])
-    action = BotAction.objects.filter(pk=action_id, telegram_user_id=user_id).first()
+    action = await sync_to_async(
+        lambda: BotAction.objects.filter(pk=action_id, telegram_user_id=user_id).first(),
+        thread_sensitive=True,
+    )()
     if not action:
         await callback.message.answer("Действие не найдено.")
         return
-    result = execute_bot_action(action)
+    result = await sync_to_async(execute_bot_action, thread_sensitive=True)(action)
     await callback.message.answer(result.message)
     await callback.answer()
 
@@ -194,9 +210,12 @@ async def reject_action(callback: CallbackQuery) -> None:
         await callback.answer(DENIED_MESSAGE_RU, show_alert=True)
         return
     action_id = int((callback.data or "").split(":", 1)[1])
-    action = BotAction.objects.filter(pk=action_id, telegram_user_id=user_id).first()
+    action = await sync_to_async(
+        lambda: BotAction.objects.filter(pk=action_id, telegram_user_id=user_id).first(),
+        thread_sensitive=True,
+    )()
     if action:
-        reject_bot_action(action)
+        await sync_to_async(reject_bot_action, thread_sensitive=True)(action)
     await callback.message.answer("Окей, действие отменено.")
     await callback.answer()
 
